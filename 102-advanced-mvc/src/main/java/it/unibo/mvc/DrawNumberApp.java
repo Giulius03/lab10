@@ -1,8 +1,13 @@
 package it.unibo.mvc;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  */
@@ -17,8 +22,10 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
     /**
      * @param views
      *            the views to attach
+     * @throws IOException
+     * @throws FileNotFoundException
      */
-    public DrawNumberApp(final DrawNumberView... views) {
+    public DrawNumberApp(final DrawNumberView... views) throws FileNotFoundException, IOException {
         /*
          * Side-effect proof
          */
@@ -28,6 +35,25 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
             view.start();
         }
         this.model = new DrawNumberImpl(MIN, MAX, ATTEMPTS);
+
+        final Configuration c = new Configuration.Builder().build();
+        this.getSettingsFromFile();
+    }
+
+    private void getSettingsFromFile() throws FileNotFoundException, IOException {
+        try (final BufferedReader r = new BufferedReader(
+                new InputStreamReader(new FileInputStream("../resources/config.yml")))) {
+            String n;
+            StringTokenizer st;
+            while ((n = r.readLine()) != null) {
+                st = new StringTokenizer(n, ": ");
+                while (st.hasMoreTokens()) {
+                    switch(st.nextToken()) {
+                        //case "minimum" -> new Configuration.Builder().setMin(st.nextToken());
+                    }
+                }
+            }
+        }
     }
 
     @Override
