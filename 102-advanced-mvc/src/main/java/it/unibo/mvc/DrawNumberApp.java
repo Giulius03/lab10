@@ -1,6 +1,7 @@
 package it.unibo.mvc;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -12,9 +13,13 @@ import java.util.StringTokenizer;
 /**
  */
 public final class DrawNumberApp implements DrawNumberViewObserver {
-    private static final int MIN = 0;
+    private static final String PATH_TO_THIS_DIR = System.getProperty("user.dir") + File.separator;
+    private static final String PATH_TO_FILE = "src" + File.separator + "main" + File.separator + "resources" + 
+        File.separator + "config.yml"; 
+    private static final String STRING_SEPARATOR = ": ";
+    /*private static final int MIN = 0;
     private static final int MAX = 100;
-    private static final int ATTEMPTS = 10;
+    private static final int ATTEMPTS = 10;*/
 
     private final DrawNumber model;
     private final List<DrawNumberView> views;
@@ -25,7 +30,7 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
      * @throws IOException
      * @throws FileNotFoundException
      */
-    public DrawNumberApp(final DrawNumberView... views) throws FileNotFoundException, IOException {
+    public DrawNumberApp(final DrawNumberView... views) throws IOException {
         /*
          * Side-effect proof
          */
@@ -34,26 +39,32 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
             view.setObserver(this);
             view.start();
         }
-        this.model = new DrawNumberImpl(MIN, MAX, ATTEMPTS);
-
-        final Configuration c = new Configuration.Builder().build();
-        this.getSettingsFromFile();
+        final Configuration configuration = this.getSettingsFromFile();
+        this.model = new DrawNumberImpl(configuration.getMin(), configuration.getMax(), configuration.getAttempts());
     }
 
-    private void getSettingsFromFile() throws FileNotFoundException, IOException {
+    private Configuration getSettingsFromFile() {
+        final Configuration.Builder cb = new Configuration.Builder();
         try (final BufferedReader r = new BufferedReader(
-                new InputStreamReader(new FileInputStream("../resources/config.yml")))) {
+                new InputStreamReader(new FileInputStream(PATH_TO_THIS_DIR + PATH_TO_FILE)))) {
             String n;
             StringTokenizer st;
             while ((n = r.readLine()) != null) {
-                st = new StringTokenizer(n, ": ");
+                st = new StringTokenizer(n, STRING_SEPARATOR);
                 while (st.hasMoreTokens()) {
                     switch(st.nextToken()) {
-                        //case "minimum" -> new Configuration.Builder().setMin(st.nextToken());
+                        case "minimum" -> cb.setMin(Integer.parseInt(st.nextToken()));
+                        case "maximum" -> cb.setMax(Integer.parseInt(st.nextToken()));
+                        case "attempts" -> cb.setAttempts(Integer.parseInt(st.nextToken()));
                     }
                 }
             }
+        } catch(final IOException e) {
+            for (final DrawNumberView v: this.views) {
+                v.displayError(e.getMessage());
+            }
         }
+        return cb.build();
     }
 
     @Override
@@ -89,10 +100,10 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
     /**
      * @param args
      *            ignored
-     * @throws FileNotFoundException 
+     * @throws IOException
      */
-    public static void main(final String... args) throws FileNotFoundException {
-        new DrawNumberApp(new DrawNumberViewImpl());
+    public static void main(final String... args) throws IOException {
+        new DrawNumberApp(new DrawNumberViewImpl()/*, new DrawNumberViewImpl(), new DrawNumberViewImpl()*/);
     }
 
 }
